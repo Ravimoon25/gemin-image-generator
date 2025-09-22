@@ -197,13 +197,16 @@ def enhance_prompt(base_prompt, style, aspect_ratio, quality_boost=True):
     
     return enhanced
 
+
 def generate_image(prompt, num_variants=1):
-    """Generate image(s) from text prompt"""
+    """Generate image(s) from text prompt - DEBUG VERSION"""
     try:
         client = get_client()
         results = []
         
         for i in range(num_variants):
+            print(f"Generating variant {i+1}/{num_variants}")
+            
             response = client.models.generate_content(
                 model=MODEL_ID,
                 contents=prompt,
@@ -218,23 +221,41 @@ def generate_image(prompt, num_variants=1):
                 )
             )
             
-            for part in response.parts:
-                if hasattr(part, 'as_image') and part.as_image():
-                    # Convert Gemini image object to PIL Image
-                    gemini_image = part.as_image()
+            print(f"Response received. Parts count: {len(response.parts) if response.parts else 0}")
+            
+            for j, part in enumerate(response.parts):
+                print(f"Part {j}: {type(part)}")
+                print(f"Part has as_image method: {hasattr(part, 'as_image')}")
+                
+                if hasattr(part, 'as_image'):
+                    image_obj = part.as_image()
+                    print(f"as_image() returned: {type(image_obj)}")
+                    print(f"Image object is truthy: {bool(image_obj)}")
                     
-                    # Convert to bytes and then to PIL Image
-                    import io
-                    img_bytes = io.BytesIO()
-                    gemini_image.save(img_bytes, format='PNG')
-                    img_bytes.seek(0)
-                    pil_image = PIL.Image.open(img_bytes)
-                    
-                    results.append(pil_image)
-                    break
+                    if image_obj:
+                        print(f"Image object attributes: {[attr for attr in dir(image_obj) if not attr.startswith('_')]}")
+                        
+                        # Try the simplest approach first - just return the object
+                        results.append(image_obj)
+                        print(f"Added image {len(results)} to results")
+                        break
+                        
+                elif hasattr(part, 'text'):
+                    print(f"Part contains text: {part.text[:100]}...")
+                else:
+                    print(f"Part type unknown: {type(part)}")
         
-        return results, "Images generated successfully!"
+        print(f"Total images generated: {len(results)}")
+        
+        if results:
+            return results, "Images generated successfully!"
+        else:
+            return [], "No images were generated from the response"
+            
     except Exception as e:
+        print(f"FULL ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         return [], f"Generation error: {str(e)}"
 
 
