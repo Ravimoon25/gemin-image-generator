@@ -236,12 +236,12 @@ def generate_image(prompt, num_variants=1):
         return [], f"Generation error: {str(e)}"
         
 
+
 def face_swap_images(source_image, target_image, options):
     """Advanced face swap between two images"""
     try:
         client = get_client()
         
-        # Build detailed face swap prompt
         prompt = f"""
         Perform a precise face swap operation:
         
@@ -280,17 +280,13 @@ def face_swap_images(source_image, target_image, options):
         
         for part in response.parts:
             if hasattr(part, 'as_image') and part.as_image():
-                # Convert Gemini image object to PIL Image
                 gemini_image = part.as_image()
                 
-                # Convert to bytes and then to PIL Image
-                import io
-                img_bytes = io.BytesIO()
-                gemini_image.save(img_bytes, format='PNG')
-                img_bytes.seek(0)
-                pil_image = PIL.Image.open(img_bytes)
-                
-                return pil_image, "Face swap completed successfully!"
+                if gemini_image and hasattr(gemini_image, 'image_bytes'):
+                    # Convert the image_bytes to a PIL Image
+                    img_bytes = io.BytesIO(gemini_image.image_bytes)
+                    pil_image = PIL.Image.open(img_bytes)
+                    return pil_image, "Face swap completed successfully!"
         
         return None, "Face swap failed to generate result"
     except Exception as e:
@@ -351,21 +347,18 @@ def advanced_edit_image(input_image, edit_type, options):
         
         for part in response.parts:
             if hasattr(part, 'as_image') and part.as_image():
-                # Convert Gemini image object to PIL Image
                 gemini_image = part.as_image()
                 
-                # Convert to bytes and then to PIL Image
-                import io
-                img_bytes = io.BytesIO()
-                gemini_image.save(img_bytes, format='PNG')
-                img_bytes.seek(0)
-                pil_image = PIL.Image.open(img_bytes)
-                
-                return pil_image, "Image transformation completed successfully!"
+                if gemini_image and hasattr(gemini_image, 'image_bytes'):
+                    # Convert the image_bytes to a PIL Image
+                    img_bytes = io.BytesIO(gemini_image.image_bytes)
+                    pil_image = PIL.Image.open(img_bytes)
+                    return pil_image, "Image transformation completed successfully!"
         
         return None, "No edited image generated"
     except Exception as e:
         return None, f"Editing error: {str(e)}"
+
 
 def analyze_image_content(image, analysis_type):
     """Comprehensive image analysis and intelligence"""
